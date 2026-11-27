@@ -1,0 +1,23 @@
+[project]
+name = "koubo-studio"
+version = "0.1.0"
+description = "口播一键成片：自动识别有声/无声视频、语音识别重配音或看画面写词配音、字幕与BGM人声闪避合成"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "faster-whisper==1.1.0",
+    "av<19",
+    "edge-tts==7.3.1",
+    "google-genai==2.11.0",
+    "openai==2.24.0",
+    "pydub==0.25.1",
+    "pillow==13.0.0",
+    "loguru==0.7.3",
+    "mcp>=1.6.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["core*"]

@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+workspace/
+*.mp4
+*.mp3
+*.wav
+*.ass
+*.srt
+.env
+config.local.json
