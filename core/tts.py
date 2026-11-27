@@ -78,6 +78,51 @@ def _split_script_sentences(text: str) -> list[str]:
     return sentences if sentences else ([cleaned] if cleaned else [])
 
 
+def _split_long_boundaries(segments: list[Segment], max_chars: int = 16) -> list[Segment]:
+    """Split long sentence boundaries on Chinese/English clause punctuation into punchy short-video lines."""
+    result: list[Segment] = []
+    for seg in segments:
+        txt = seg.text.strip()
+        if len(txt) <= max_chars:
+            result.append(
+                Segment(index=len(result) + 1, start=seg.start, end=seg.end, text=txt)
+            )
+            continue
+
+        clauses = [c.strip() for c in re.split(r"(?<=[，；,;、。！？!?])", txt) if c.strip()]
+        # Merge very short adjacent clauses (e.g. <= 5 chars) so subtitles don't flicker too fast
+        merged: list[str] = []
+        for c in clauses:
+            if merged and len(merged[-1]) + len(c) <= max_chars:
+                merged[-1] += c
+            else:
+                merged.append(c)
+
+        if len(merged) <= 1:
+            result.append(
+                Segment(index=len(result) + 1, start=seg.start, end=seg.end, text=txt)
+            )
+            continue
+
+        total_dur = max(0.2, seg.end - seg.start)
+        total_weight = sum(max(1, len(re.sub(r"[，。！？；、,.!?;:\s]", "", m))) for m in merged)
+        cursor = seg.start
+        for m in merged:
+            w = max(1, len(re.sub(r"[，。！？；、,.!?;:\s]", "", m)))
+            dur = total_dur * (w / total_weight)
+            end_t = min(seg.end, cursor + dur)
+            result.append(
+                Segment(
+                    index=len(result) + 1,
+                    start=round(cursor, 3),
+                    end=round(end_t, 3),
+                    text=m.rstrip("，。；、,;"),
+                )
+            )
+            cursor = end_t
+    return result
+
+
 def _fallback_proportional_segments(text: str, total_duration: float) -> list[Segment]:
     sentences = _split_script_sentences(text)
     if not sentences:
@@ -172,7 +217,7 @@ def build_synced_voice_for_segments(
 
     out_wav = work_dir / "dubbed_voice.wav"
     canvas.export(str(out_wav), format="wav")
-    return out_wav, synced_segments
+    return out_wav, _split_long_boundaries(synced_segments, max_chars=16)
 
 
 def build_synced_voice_for_script(
@@ -199,6 +244,7 @@ def build_synced_voice_for_script(
 
     if not boundaries:
         boundaries = _fallback_proportional_segments(cleaned, tts_dur)
+    boundaries = _split_long_boundaries(boundaries, max_chars=16)
 
     speed = 1.0
     if video_duration > 0.5 and tts_dur > video_duration * 0.98:
