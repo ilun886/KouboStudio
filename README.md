@@ -29,3 +29,8 @@
   }
 }
 ```
+
+## 致谢与来源
+
+本项目受开源项目 [harry0703/MoneyPrinterTurbo](https://github.com/harry0703/MoneyPrinterTurbo)（MIT License）启发并参考其音频/字幕/BGM 自动化工作流思路精简改编，专注于**口播一键成片与 MCP Agent 接入**场景。
+
